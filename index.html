@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Containers Obradores</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    body { padding: 1rem; max-width: 900px; margin: auto; font-family: system-ui, sans-serif; }
+    .hidden { display: none !important; }
+    .card { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; color: #fff; }
+    .badge-green { background: #198754; } .badge-blue { background: #0d6efd; } .badge-orange { background: #fd7e14; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
+    .timeline-item { border-left: 3px solid #0d6efd; padding-left: 1rem; margin-bottom: 1rem; }
+    img.thumb { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+    #modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index: 999; }
+    #modal img { max-width: 95%; max-height: 95%; border-radius: 8px; }
+    nav a { margin-right: 1rem; font-weight: bold; text-decoration: none; color: #0d6efd; }
+    .loading { text-align: center; padding: 2rem; color: #666; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #dee2e6; }
+    th { background: #f1f3f5; }
+  </style>
+</head>
+<body>
+  <div id="login-screen">
+    <h2>🔐 Acceso Sistema</h2>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Contraseña" required>
+      <button type="submit" id="btn-login">Ingresar</button>
+      <p id="login-error" style="color:red"></p>
+    </form>
+  </div>
+
+  <div id="app-screen" class="hidden">
+    <header style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>🏗️ Containers Obradores</h3>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <span id="user-role" class="badge badge-green">Cargando...</span>
+        <button id="logout-btn" class="secondary" style="padding:0.3rem 0.6rem;">Salir</button>
+      </div>
+    </header>
+    <nav>
+      <a href="#" data-view="dashboard">🏠 Inicio</a>
+      <a href="#" data-view="containers">📦 Containers</a>
+      <a href="#" data-view="clientes">👥 Clientes</a>
+      <a href="#" data-view="contratos">📋 Contratos</a>
+      <a href="#" data-view="cobros">💵 Cobros</a>
+    </nav>
+    <main id="content" class="card"></main>
+  </div>
+
+  <div id="modal" onclick="this.style.display='none'"><img id="modal-img"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4d2lzaXdkdWd3ZXZ5ZW50cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzQyMzAsImV4cCI6MjA5NTU1MDIzMH0._aTZ6TMG3tTr5ZSvxJ9Vld8fCeLafR77TBeVJAYsqDA';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let user = null, role = 'operario';
+    let containers = [], clients = [], contratos = [], cobros = [];
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-login');
+      btn.textContent = 'Entrando...'; btn.disabled = true;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      });
+      btn.textContent = 'Ingresar'; btn.disabled = false;
+      if (error) return document.getElementById('login-error').textContent = error.message;
+      user = data.user;
+      await loadProfile();
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+      await initApp();
+    });
+
+    document.getElementById('logout-btn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+
+    async function loadProfile() {
+      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      role = data?.role || 'operario';
+      document.getElementById('user-role').textContent = role.toUpperCase();
+    }
+
+    document.querySelectorAll('nav a').forEach(a => a.onclick = e => { e.preventDefault(); loadView(a.dataset.view); });
+
+    async function loadView(view) {
+      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando...</div>';
+      if (view === 'dashboard') await renderDashboard();
+      else if (view === 'containers') await renderContainers();
+      else if (view === 'clientes') await renderClients();
+      else if (view === 'contratos') await renderContratos();
+      else if (view === 'cobros') await renderCobros();
+    }
+
+    async function initApp() {
+      await Promise.all([
+        supabase.from('containers').select('*').then(r => containers = r.data || []),
+        supabase.from('clients').select('*').then(r => clients = r.data || []),
+        supabase.from('contratos').select('*').then(r => contratos = r.data || []),
+        supabase.from('cobros').select('*').then(r => cobros = r.data || [])
+      ]);
+      loadView('dashboard');
+    }
+
+    async function renderDashboard() {
+      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
+      const alquilados = containers.filter(c => active.has(c.id)).length;
+      const disponibles = containers.length - alquilados;
+      const cobrados = cobros.filter(c => c.estado === 'Cobrado').reduce((s,c) => s + c.monto, 0);
+      const pendientes = cobros.filter(c => c.estado === 'Pendiente').length;
+      
+      document.getElementById('content').innerHTML = `
+        <h4>📊 Resumen</h4>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin:1rem 0;">
+          <div class="card" style="text-align:center"><h2 style="margin:0">${alquilados}</h2><small>Alquilados</small></div>
+          <div class="card" style="text-align:center"><h2 style="margin:0">${disponibles}</h2><small>Disponibles</small></div>
+          <div class="card" style="text-align:center"><h2 style="margin:0">$${cobrados.toLocaleString()}</h2><small>Ingresos</small></div>
+          <div class="card" style="text-align:center"><h2 style="margin:0; color:#fd7e14">${pendientes}</h2><small>Pendientes</small></div>
+        </div>
+        <h5>📝 Actividad Reciente</h5><div id="recent-activity"></div>`;
+      loadRecentActivity();
+    }
+
+    async function loadRecentActivity() {
+      const { data } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5);
+      let html = '<ul>';
+      data?.forEach(a => html += `<li>${new Date(a.created_at).toLocaleDateString()} - ${a.txt}</li>`);
+      document.getElementById('recent-activity').innerHTML = html || '<li>Sin actividad</li>';
+    }
+
+    async function renderContainers() {
+      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
+      let html = `<h4>📦 Inventario</h4><button onclick="showAddContainerForm()">+ Nuevo</button><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem; margin-top:1rem;">`;
+      containers.forEach(c => {
+        const est = active.has(c.id) ? 'Alquilado' : 'Disponible';
+        const badge = est === 'Alquilado' ? 'badge-green' : 'badge-blue';
+        html += `<div class="card">
+          <div style="display:flex; justify-content:space-between"><h5 style="margin:0">${c.id} | ${c.tipo}</h5><span class="badge ${badge}">${est}</span></div>
+          <p><small>${c.dim || '-'} | Año: ${c.anio || '-'}</small></p>
+          <p><small>${c.obs || ''}</small></p>
+          <button onclick="openHistorial('${c.id}')" style="margin-right:0.5rem">📜 Historial</button>
+          ${role === 'admin' ? `<button onclick="deleteContainer('${c.id}')" class="secondary">🗑️</button>` : ''}
+        </div>`;
+      });
+      document.getElementById('content').innerHTML = html + '</div>';
+    }
+
+    function showAddContainerForm() {
+      document.getElementById('content').innerHTML = `
+        <h4>➕ Nuevo Container</h4>
+        <form id="form-container">
+          <input name="id" placeholder="ID (ej: C001)" required>
+          <select name="tipo"><option>Container 6 pies</option><option>Container 12 pies</option></select>
+          <input name="dim" placeholder="Dimensiones (opcional)">
+          <input name="anio" type="number" placeholder="Año">
+          <textarea name="obs" placeholder="Observaciones"></textarea>
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="loadView('containers')" class="secondary">Cancelar</button>
+        </form>`;
+      document.getElementById('form-container').onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        await supabase.from('containers').insert(Object.fromEntries(f));
+        await logActividad(`Se agregó container ${f.get('id')}`);
+        await initApp(); loadView('containers');
+      };
+    }
+
+    async function deleteContainer(id) {
+      if(!confirm('¿Eliminar este container?')) return;
+      await supabase.from('containers').delete().eq('id', id);
+      await initApp(); loadView('containers');
+    }
+
+    async function openHistorial(containerId) {
+      const { data } = await supabase.from('history_events').select('*').eq('container_id', containerId).order('fecha', { ascending: false });
+      let html = `<h4>📜 Historial: ${containerId}</h4><button onclick="showAddEvent('${containerId}')">+ Registrar Evento</button><div style="margin-top:1rem;">`;
+      data?.forEach(ev => {
+        let fotosHtml = '';
+        ev.fotos?.forEach(url => fotosHtml += `<img src="${url}" class="thumb" onclick="showModal('${url}')" style="width:80px; height:60px; object-fit:cover; margin:4px;">`);
+        html += `<div class="timeline-item">
+          <strong>${ev.fecha} | ${ev.tipo.toUpperCase()}</strong><br>
+          ${ev.descripcion || ''} ${ev.costo ? `<br>💰 Costo: $${ev.costo} - Proveedor: ${ev.proveedor || '-'}` : ''}
+          <div style="margin-top:0.5rem;">${fotosHtml}</div>
+          <small>${role === 'admin' ? `<button onclick="deleteEvent('${ev.id}','${containerId}')" class="secondary">Eliminar</button>` : ''}</small>
+        </div>`;
+      });
+      document.getElementById('content').innerHTML = html + `</div><button onclick="loadView('containers')" class="secondary" style="margin-top:1rem;">⬅ Volver</button>`;
+    }
+
+    function showAddEvent(containerId) {
+      document.getElementById('content').innerHTML = `
+        <h4>📝 Nuevo Evento</h4>
+        <form id="form-event">
+          <input type="hidden" name="container_id" value="${containerId}">
+          <input type="date" name="fecha" required>
+          <select name="tipo"><option>foto</option><option>reparacion</option><option>pintura</option><option>mantenimiento</option><option>inspeccion</option><option>otro</option></select>
+          <textarea name="descripcion" placeholder="Descripción"></textarea>
+          <input name="costo" type="number" placeholder="Costo ($)">
+          <input name="proveedor" placeholder="Proveedor">
+          <label>Subir Fotos (max 3)<input type="file" id="foto-input" multiple accept="image/*"></label>
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="openHistorial('${containerId}')" class="secondary">Cancelar</button>
+        </form>`;
+      document.getElementById('form-event').onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const files = document.getElementById('foto-input').files;
+        let urls = [];
+        for(let i=0; i<Math.min(files.length, 3); i++){
+          const path = `${containerId}/${Date.now()}_${i}.jpg`;
+          await supabase.storage.from('fotos-historial').upload(path, files[i]);
+          urls.push(supabase.storage.from('fotos-historial').getPublicUrl(path).data.publicUrl);
+        }
+        await supabase.from('history_events').insert({
+          container_id: f.get('container_id'),
+          fecha: f.get('fecha'),
+          tipo: f.get('tipo'),
+          descripcion: f.get('descripcion'),
+          costo: parseInt(f.get('costo')) || 0,
+          proveedor: f.get('proveedor'),
+          fotos: urls,
+          created_by: user.id
+        });
+        await logActividad(`Historial actualizado en ${containerId}`);
+        openHistorial(containerId);
+      };
+    }
+
+    async function deleteEvent(id, cid) {
+      if(!confirm('¿Eliminar evento?')) return;
+      await supabase.from('history_events').delete().eq('id', id);
+      openHistorial(cid);
+    }
+
+    function showModal(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
+
+    async function renderClients() {
+      let html = `<h4>👥 Clientes</h4><button onclick="showAddClient()">+ Nuevo</button><table><thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>CUIT/DNI</th><th>Tel</th></tr></thead><tbody>`;
+      clients.forEach(c => html += `<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.tipo}</td><td>${c.cuit || '-'}</td><td>${c.tel || '-'}</td></tr>`);
+      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+    }
+
+    function showAddClient() {
+      document.getElementById('content').innerHTML = `
+        <h4>➕ Nuevo Cliente</h4>
+        <form id="form-client">
+          <input name="id" placeholder="ID (ej: CLI-001)" required>
+          <input name="nombre" placeholder="Nombre completo o razón social" required>
+          <select name="tipo"><option>Empresa</option><option>Persona</option></select>
+          <input name="cuit" placeholder="CUIT/DNI">
+          <input name="tel" placeholder="Teléfono">
+          <input name="email" type="email" placeholder="Email">
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="loadView('clientes')" class="secondary">Cancelar</button>
+        </form>`;
+      document.getElementById('form-client').onsubmit = async e => {
+        e.preventDefault();
+        await supabase.from('clients').insert(Object.fromEntries(new FormData(e.target)));
+        await initApp(); loadView('clientes');
+      };
+    }
+
+    async function renderContratos() {
+      let html = `<h4>📋 Contratos</h4><button onclick="showAddContrato()">+ Nuevo</button><table><thead><tr><th>ID</th><th>Cliente</th><th>Container</th><th>Inicio</th><th>Estado</th><th>Precio</th></tr></thead><tbody>`;
+      contratos.forEach(ct => {
+        const cl = clients.find(c => c.id === ct.cliente_id);
+        html += `<tr><td>${ct.id}</td><td>${cl?.nombre || '-'}</td><td>${ct.container_id}</td><td>${ct.inicio}</td><td><span class="badge ${ct.estado==='Activo'?'badge-green':'badge-blue'}">${ct.estado}</span></td><td>$${ct.precio_mes?.toLocaleString() || '-'}</td></tr>`;
+      });
+      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+    }
+
+    function showAddContrato() {
+      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
+      const available = containers.filter(c => !active.has(c.id));
+      let opts = available.map(c => `<option value="${c.id}">${c.id} (${c.tipo})</option>`).join('');
+      let cliOpts = clients.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      
+      document.getElementById('content').innerHTML = `
+        <h4>➕ Nuevo Contrato</h4>
+        <form id="form-ctr">
+          <input name="id" placeholder="ID Contrato (ej: CTR-001)" required>
+          <select name="cliente_id"><option value="">Seleccionar cliente</option>${cliOpts}</select>
+          <select name="container_id" id="ctr-cont"><option value="">Seleccionar container</option>${opts}</select>
+          <input type="date" name="inicio" required>
+          <input type="date" name="fin" placeholder="Opcional">
+          <select name="estado"><option>Activo</option><option>Finalizado</option></select>
+          <div class="card" id="resumen-ctr">Seleccioná container para ver precios</div>
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="loadView('contratos')" class="secondary">Cancelar</button>
+        </form>`;
+      
+      document.getElementById('ctr-cont').onchange = e => {
+        const tipo = containers.find(c => c.id === e.target.value)?.tipo;
+        const precio = tipo === 'Container 12 pies' ? 80000 : 50000;
+        const deposito = tipo === 'Container 12 pies' ? 160000 : 100000;
+        document.getElementById('resumen-ctr').innerHTML = `💰 Precio/mes: <strong>$${precio.toLocaleString()}</strong> | 🛡️ Depósito: <strong>$${deposito.toLocaleString()}</strong>`;
+      };
+
+      document.getElementById('form-ctr').onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const tipo = containers.find(c => c.id === f.get('container_id'))?.tipo;
+        await supabase.from('contratos').insert({
+          id: f.get('id'), cliente_id: f.get('cliente_id'), container_id: f.get('container_id'),
+          inicio: f.get('inicio'), fin: f.get('fin') || null, estado: f.get('estado'),
+          precio_mes: tipo === 'Container 12 pies' ? 80000 : 50000,
+          deposito: tipo === 'Container 12 pies' ? 160000 : 100000,
+          created_by: user.id
+        });
+        await logActividad(`Contrato ${f.get('id')} creado`);
+        await initApp(); loadView('contratos');
+      };
+    }
+
+    async function renderCobros() {
+      let html = `<h4>💵 Cobros Anticipados</h4><button onclick="showAddCobro()">+ Registrar Cobro</button><table><thead><tr><th>ID</th><th>Contrato</th><th>Mes</th><th>Fecha</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>`;
+      cobros.forEach(c => html += `<tr><td>${c.id}</td><td>${c.contrato_id}</td><td>${c.mes}</td><td>${c.fecha}</td><td>$${c.monto?.toLocaleString()}</td><td>${c.vencimiento || '-'}</td><td><span class="badge ${c.estado==='Cobrado'?'badge-green':'badge-orange'}">${c.estado}</span></td></tr>`);
+      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+    }
+
+    function showAddCobro() {
+      let ctrOpts = contratos.filter(c => c.estado === 'Activo').map(c => `<option value="${c.id}">${c.id} - $${c.precio_mes?.toLocaleString()}</option>`).join('');
+      document.getElementById('content').innerHTML = `
+        <h4>➕ Nuevo Cobro</h4>
+        <form id="form-cobro">
+          <input name="id" placeholder="ID Cobro (ej: COB-001)" required>
+          <select name="contrato_id"><option value="">Contrato</option>${ctrOpts}</select>
+          <input name="mes" type="number" placeholder="Nº de mes" required>
+          <input type="date" name="fecha" required>
+          <select name="estado"><option>Cobrado</option><option>Pendiente</option></select>
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="loadView('cobros')" class="secondary">Cancelar</button>
+        </form>`;
+      
+      document.getElementById('form-cobro').onsubmit = async e => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const ctr = contratos.find(c => c.id === f.get('contrato_id'));
+        const fechaCobro = new Date(f.get('fecha'));
+        const venc = new Date(fechaCobro); venc.setMonth(venc.getMonth() + 1);
+        
+        await supabase.from('cobros').insert({
+          id: f.get('id'), contrato_id: f.get('contrato_id'), mes: parseInt(f.get('mes')),
+          fecha: f.get('fecha'), monto: ctr?.precio_mes || 0, estado: f.get('estado'),
+          vencimiento: venc.toISOString().split('T')[0], created_by: user.id
+        });
+        await logActividad(`Cobro ${f.get('id')} registrado`);
+        await initApp(); loadView('cobros');
+      };
+    }
+
+    async function logActividad(txt) {
+      await supabase.from('activity_log').insert({ txt, created_by: user.id });
+    }
+  </script>
+</body>
+</html>
