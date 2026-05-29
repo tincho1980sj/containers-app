@@ -7,22 +7,22 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
-    body { padding: 1rem; max-width: 900px; margin: auto; font-family: system-ui, sans-serif; }
-    .hidden { display: none !important; }
-    .card { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; color: #fff; }
-    .badge-green { background: #198754; } .badge-blue { background: #0d6efd; } .badge-orange { background: #fd7e14; }
-    .timeline-item { border-left: 3px solid #0d6efd; padding-left: 1rem; margin-bottom: 1rem; }
-    img.thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; margin: 2px; }
-    #modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index: 999; }
-    #modal img { max-width: 95%; max-height: 95%; border-radius: 8px; }
-    nav a { margin-right: 1rem; font-weight: bold; text-decoration: none; color: #0d6efd; }
-    .loading { text-align: center; padding: 2rem; color: #666; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
-    th { background: #f1f3f5; }
-    input, select, textarea { width: 100%; margin-bottom: 0.5rem; }
-    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
+    body{padding:1rem;max-width:900px;margin:auto;font-family:system-ui,sans-serif}
+    .hidden{display:none!important}
+    .card{background:#f8f9fa;padding:1rem;border-radius:8px;margin-bottom:1rem;border:1px solid #dee2e6}
+    .badge{padding:4px 8px;border-radius:12px;font-size:.85rem;color:#fff}
+    .badge-green{background:#198754}.badge-blue{background:#0d6efd}.badge-orange{background:#fd7e14}
+    .timeline-item{border-left:3px solid #0d6efd;padding-left:1rem;margin-bottom:1rem}
+    img.thumb{width:80px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;margin:2px}
+    #modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);display:none;justify-content:center;align-items:center;z-index:999}
+    #modal img{max-width:95%;max-height:95%;border-radius:8px}
+    nav a{margin-right:1rem;font-weight:bold;text-decoration:none;color:#0d6efd}
+    .loading{text-align:center;padding:2rem;color:#666}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.5rem;text-align:left;border-bottom:1px solid #dee2e6;font-size:.9rem}
+    th{background:#f1f3f5}
+    input,select,textarea{width:100%;margin-bottom:.5rem}
+    .btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
   </style>
 </head>
 <body>
@@ -32,19 +32,18 @@
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="password" placeholder="Contraseña" required>
       <button type="submit" id="btn-login">Ingresar</button>
-      <p id="login-error" style="color:red; font-size: 0.9rem;"></p>
+      <p id="login-error" style="color:red;font-size:.9rem"></p>
     </form>
   </div>
-
   <div id="app-screen" class="hidden">
-    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-      <h3 style="margin:0;">🏗️ Containers Obradores</h3>
-      <div style="display:flex; gap:0.5rem; align-items:center;">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 style="margin:0">🏗️ Containers Obradores</h3>
+      <div style="display:flex;gap:.5rem;align-items:center">
         <span id="user-role" class="badge badge-green">...</span>
-        <button id="logout-btn" class="secondary" style="padding:0.3rem 0.6rem; font-size:0.9rem;">Salir</button>
+        <button id="logout-btn" class="secondary" style="padding:.3rem .6rem;font-size:.9rem">Salir</button>
       </div>
     </header>
-    <nav style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee;">
+    <nav style="margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #eee">
       <a href="#" data-view="dashboard">🏠 Inicio</a>
       <a href="#" data-view="containers">📦 Containers</a>
       <a href="#" data-view="clientes">👥 Clientes</a>
@@ -53,355 +52,114 @@
     </nav>
     <main id="content" class="card"></main>
   </div>
-
   <div id="modal" onclick="this.style.display='none'"><img id="modal-img"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // 🔴 PEGÁ TUS DATOS ACÁ (mantené las comillas simples)
+    // ⚠️ REEMPLAZÁ SOLO ESTAS DOS LÍNEAS CON TUS DATOS REALES
     const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_nbbeIEpXzHM1GWsMqTxe6w_gyvVCPiQ';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4d2lzaXdkdWd3ZXZ5ZW50cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzQyMzAsImV4cCI6MjA5NTU1MDIzMH0._aTZ6TMG3tTr5ZSvxJ9Vld8fCeLafR77TBeVJAYsqDA';
     
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    let user = null;
-    let role = 'operario';
+    let user = null, role = 'operario';
     let containers = [], clients = [], contratos = [], cobros = [];
 
-    // ============ INICIALIZACIÓN SEGURA ============
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btn-login');
-        const errBox = document.getElementById('login-error');
-        errBox.textContent = '';
-        btn.textContent = 'Verificando...'; btn.disabled = true;
-
+        const err = document.getElementById('login-error');
+        err.textContent = ''; btn.textContent = 'Verificando...'; btn.disabled = true;
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value
           });
           if (error) throw new Error(error.message);
-          
           user = data.user;
           document.getElementById('login-screen').classList.add('hidden');
           document.getElementById('app-screen').classList.remove('hidden');
-          
-          await loadProfile();
-          await initApp();
-        } catch (err) {
-          errBox.textContent = '❌ ' + err.message;
-          console.error('Login error:', err);
-        } finally {
-          btn.textContent = 'Ingresar'; btn.disabled = false;
-        }
+          await loadProfile(); await initApp();
+        } catch (e) { err.textContent = '❌ ' + e.message; }
+        finally { btn.textContent = 'Ingresar'; btn.disabled = false; }
       });
 
-      document.getElementById('logout-btn').onclick = async () => {
-        await supabase.auth.signOut();
-        location.reload();
-      };
-
-      document.querySelectorAll('nav a').forEach(link => {
-        link.onclick = (e) => { e.preventDefault(); loadView(link.dataset.view); };
-      });
-
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js').catch(console.warn);
-      }
+      document.getElementById('logout-btn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+      document.querySelectorAll('nav a').forEach(a => a.onclick = e => { e.preventDefault(); loadView(a.dataset.view); });
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(console.warn);
     });
 
-    // ============ FUNCIONES PRINCIPALES ============
     async function loadProfile() {
-      try {
-        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (data?.role) role = data.role;
-      } catch(e) { console.warn('Perfil no cargado, usando operario'); }
+      try { const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single(); if (data?.role) role = data.role; } catch(e){}
       document.getElementById('user-role').textContent = role.toUpperCase();
     }
 
     async function initApp() {
-      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando datos...</div>';
+      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando...</div>';
       try {
-        const [c1, c2, c3, c4] = await Promise.all([
+        const [c1,c2,c3,c4] = await Promise.all([
           supabase.from('containers').select('*'),
           supabase.from('clients').select('*'),
           supabase.from('contratos').select('*'),
           supabase.from('cobros').select('*')
         ]);
-        containers = c1.data || [];
-        clients = c2.data || [];
-        contratos = c3.data || [];
-        cobros = c4.data || [];
+        containers = c1.data||[]; clients = c2.data||[]; contratos = c3.data||[]; cobros = c4.data||[];
         renderDashboard();
-      } catch(err) {
-        document.getElementById('content').innerHTML = `<p style="color:red">⚠️ Error: ${err.message}</p>`;
-      }
+      } catch(e) { document.getElementById('content').innerHTML = `<p style="color:red">⚠️ ${e.message}</p>`; }
     }
 
-    function loadView(view) {
-      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando...</div>';
-      if (view === 'dashboard') renderDashboard();
-      else if (view === 'containers') renderContainers();
-      else if (view === 'clientes') renderClients();
-      else if (view === 'contratos') renderContratos();
-      else if (view === 'cobros') renderCobros();
-    }
+    function loadView(v) { document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando...</div>'; if(v==='dashboard')renderDashboard(); else if(v==='containers')renderContainers(); else if(v==='clientes')renderClients(); else if(v==='contratos')renderContratos(); else if(v==='cobros')renderCobros(); }
 
-    // ============ DASHBOARD ============
     function renderDashboard() {
-      const activeIds = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      const alquilados = containers.filter(c => activeIds.has(c.id)).length;
-      const disponibles = containers.length - alquilados;
-      const cobrados = cobros.filter(c => c.estado === 'Cobrado').reduce((s,c) => s + (c.monto || 0), 0);
-      const pendientes = cobros.filter(c => c.estado === 'Pendiente').length;
-      
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">📊 Resumen</h4>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.8rem; margin:1rem 0;">
-          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">${alquilados}</h2><small>Alquilados</small></div>
-          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">${disponibles}</h2><small>Disponibles</small></div>
-          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">$${cobrados.toLocaleString()}</h2><small>Ingresos</small></div>
-          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0; color:#fd7e14;">${pendientes}</h2><small>Pendientes</small></div>
-        </div>
-        <h5>📝 Actividad Reciente</h5><div id="recent-activity"><small>Cargando...</small></div>`;
-      loadRecentActivity();
+      const act = new Set(contratos.filter(c=>c.estado==='Activo').map(c=>c.container_id));
+      const alq = containers.filter(c=>act.has(c.id)).length, disp = containers.length - alq;
+      const cob = cobros.filter(c=>c.estado==='Cobrado').reduce((s,c)=>s+(c.monto||0),0), pen = cobros.filter(c=>c.estado==='Pendiente').length;
+      document.getElementById('content').innerHTML = `<h4 style="margin-top:0">📊 Resumen</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.8rem;margin:1rem 0"><div class="card" style="text-align:center;margin:0"><h2 style="margin:.3rem 0">${alq}</h2><small>Alquilados</small></div><div class="card" style="text-align:center;margin:0"><h2 style="margin:.3rem 0">${disp}</h2><small>Disponibles</small></div><div class="card" style="text-align:center;margin:0"><h2 style="margin:.3rem 0">$${cob.toLocaleString()}</h2><small>Ingresos</small></div><div class="card" style="text-align:center;margin:0"><h2 style="margin:.3rem 0;color:#fd7e14">${pen}</h2><small>Pendientes</small></div></div><h5>📝 Actividad Reciente</h5><div id="recent-activity"><small>Cargando...</small></div>`;
+      loadRecent();
     }
 
-    async function loadRecentActivity() {
-      try {
-        const { data } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5);
-        let html = '<ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">';
-        if (data?.length) data.forEach(a => html += `<li>${new Date(a.created_at).toLocaleDateString()} - ${a.txt}</li>`);
-        else html += '<li><small>Sin actividad</small></li>';
-        document.getElementById('recent-activity').innerHTML = html + '</ul>';
-      } catch(e) { document.getElementById('recent-activity').innerHTML = '<small>Error cargando</small>'; }
+    async function loadRecent() {
+      try { const { data } = await supabase.from('activity_log').select('*').order('created_at',{ascending:false}).limit(5); let h='<ul style="margin:0;padding-left:1.2rem;font-size:.9rem">'; data?.forEach(a=>h+=`<li>${new Date(a.created_at).toLocaleDateString()} - ${a.txt}</li>`); document.getElementById('recent-activity').innerHTML = h||'<li><small>Sin actividad</small></li>'; } catch(e){}
     }
 
-    // ============ CONTAINERS ============
     function renderContainers() {
-      const activeIds = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      let html = `<h4 style="margin-top:0;">📦 Inventario</h4>
-        <button onclick="showAddContainerForm()" style="margin-bottom:1rem;">+ Nuevo</button>
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;">`;
-      containers.forEach(c => {
-        const est = activeIds.has(c.id) ? 'Alquilado' : 'Disponible';
-        const badge = est === 'Alquilado' ? 'badge-green' : 'badge-blue';
-        html += `<div class="card" style="margin:0;">
-          <div style="display:flex; justify-content:space-between;"><h5 style="margin:0;">${c.id} | ${c.tipo}</h5><span class="badge ${badge}">${est}</span></div>
-          <p style="margin:0.3rem 0;"><small>${c.dim || '-'} | Año: ${c.anio || '-'}</small></p>
-          <p style="margin:0.3rem 0;"><small>${c.obs || ''}</small></p>
-          <button onclick="openHistorial('${c.id}')" style="margin-right:0.5rem;">📜 Historial</button>
-          ${role==='admin' ? `<button onclick="deleteContainer('${c.id}')" class="secondary">🗑️</button>` : ''}
-        </div>`;
-      });
-      document.getElementById('content').innerHTML = html + '</div>';
+      const act = new Set(contratos.filter(c=>c.estado==='Activo').map(c=>c.container_id)); let h=`<h4 style="margin-top:0">📦 Inventario</h4><button onclick="addContainer()" style="margin-bottom:1rem">+ Nuevo</button><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem">`;
+      containers.forEach(c=>{ const est=act.has(c.id)?'Alquilado':'Disponible', b=est==='Alquilado'?'badge-green':'badge-blue'; h+=`<div class="card" style="margin:0"><div style="display:flex;justify-content:space-between"><h5 style="margin:0">${c.id} | ${c.tipo}</h5><span class="badge ${b}">${est}</span></div><p style="margin:.3rem 0"><small>${c.dim||'-'} | Año: ${c.anio||'-'}</small></p><p style="margin:.3rem 0"><small>${c.obs||''}</small></p><button onclick="openHist('${c.id}')" style="margin-right:.5rem">📜 Historial</button>${role==='admin'?`<button onclick="delCont('${c.id}')" class="secondary">🗑️</button>`:''}</div>`; });
+      document.getElementById('content').innerHTML = h+'</div>';
     }
 
-    function showAddContainerForm() {
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">➕ Nuevo Container</h4>
-        <form id="form-c">
-          <label>ID<input name="id" placeholder="C001" required style="margin-bottom:0.5rem;"></label>
-          <label>Tipo<select name="tipo" style="margin-bottom:0.5rem;"><option>Container 6 pies</option><option>Container 12 pies</option></select></label>
-          <label>Dimensión<input name="dim" placeholder="2.4×1.8×2.1" style="margin-bottom:0.5rem;"></label>
-          <label>Año<input name="anio" type="number" placeholder="2022" style="margin-bottom:0.5rem;"></label>
-          <label>Obs<textarea name="obs" rows="2" style="margin-bottom:0.5rem;"></textarea></label>
-          <button type="submit">Guardar</button> <button type="button" onclick="loadView('containers')" class="secondary">Cancelar</button>
-        </form>`;
-      document.getElementById('form-c').onsubmit = async (e) => {
-        e.preventDefault();
-        const f = Object.fromEntries(new FormData(e.target));
-        await supabase.from('containers').insert([{id:f.id, tipo:f.tipo, dim:f.dim||null, anio:f.anio||null, obs:f.obs||null}]);
-        await logActividad(`Container ${f.id} agregado`);
-        await initApp(); loadView('containers');
-      };
+    function addContainer() {
+      document.getElementById('content').innerHTML=`<h4 style="margin-top:0">➕ Container</h4><form id="fc"><label>ID<input name="id" placeholder="C001" required style="margin-bottom:.5rem"></label><label>Tipo<select name="tipo" style="margin-bottom:.5rem"><option>Container 6 pies</option><option>Container 12 pies</option></select></label><label>Dim<input name="dim" style="margin-bottom:.5rem"></label><label>Año<input name="anio" type="number" style="margin-bottom:.5rem"></label><label>Obs<textarea name="obs" rows="2" style="margin-bottom:.5rem"></textarea></label><button type="submit">Guardar</button> <button type="button" onclick="loadView('containers')" class="secondary">Cancelar</button></form>`;
+      document.getElementById('fc').onsubmit=async(e)=>{ e.preventDefault(); const f=Object.fromEntries(new FormData(e.target)); await supabase.from('containers').insert([{id:f.id,tipo:f.tipo,dim:f.dim||null,anio:f.anio||null,obs:f.obs||null}]); await logA(`Container ${f.id} agregado`); await initApp(); loadView('containers'); };
     }
 
-    async function deleteContainer(id) {
-      if(!confirm(`¿Eliminar ${id}?`)) return;
-      await supabase.from('containers').delete().eq('id', id);
-      await initApp(); loadView('containers');
+    async function delCont(id) { if(!confirm(`¿Eliminar ${id}?`))return; await supabase.from('containers').delete().eq('id',id); await initApp(); loadView('containers'); }
+
+    async function openHist(cid) {
+      document.getElementById('content').innerHTML='<div class="loading">⏳ Historial...</div>';
+      const { data } = await supabase.from('history_events').select('*').eq('container_id',cid).order('fecha',{ascending:false}); let h=`<h4 style="margin-top:0">📜 Historial: ${cid}</h4><button onclick="addEvent('${cid}')" style="margin:.5rem 0">+ Evento</button><div>`;
+      data?.forEach(ev=>{ let imgs=''; ev.fotos?.forEach(u=>imgs+=`<img src="${u}" class="thumb" onclick="event.stopPropagation();showModal('${u}')">`); const cost=ev.costo?`<br><small>💰 $${ev.costo.toLocaleString()} ${ev.proveedor?`- ${ev.proveedor}`:''}</small>`:''; h+=`<div class="timeline-item"><strong>${ev.fecha} | ${ev.tipo.toUpperCase()}</strong><br><small>${ev.descripcion||''}${cost}</small>${imgs?`<div style="margin-top:.5rem">${imgs}</div>`:''}${role==='admin'?`<br><button onclick="delEvt('${ev.id}','${cid}')" class="secondary" style="margin-top:.5rem;font-size:.8rem">Eliminar</button>`:''}</div>`; });
+      document.getElementById('content').innerHTML=h+'</div><button onclick="loadView(\'containers\')" class="secondary" style="margin-top:1rem">⬅ Volver</button>';
     }
 
-    // ============ HISTORIAL ============
-    async function openHistorial(cid) {
-      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando historial...</div>';
-      const { data } = await supabase.from('history_events').select('*').eq('container_id', cid).order('fecha', { ascending: false });
-      let html = `<h4 style="margin-top:0;">📜 Historial: ${cid}</h4>
-        <button onclick="showAddEvent('${cid}')" style="margin:0.5rem 0;">+ Evento</button><div>`;
-      if (data?.length) {
-        data.forEach(ev => {
-          let imgs = '';
-          ev.fotos?.forEach(u => imgs += `<img src="${u}" class="thumb" onclick="event.stopPropagation(); showModal('${u}')">`);
-          const costo = ev.costo ? `<br><small>💰 $${ev.costo.toLocaleString()} ${ev.proveedor?`- ${ev.proveedor}`:''}</small>` : '';
-          html += `<div class="timeline-item"><strong>${ev.fecha} | ${ev.tipo.toUpperCase()}</strong><br><small>${ev.descripcion||''}${costo}</small>${imgs?`<div style="margin-top:0.5rem;">${imgs}</div>`:''}
-          ${role==='admin'?`<br><button onclick="deleteEvent('${ev.id}','${cid}')" class="secondary" style="margin-top:0.5rem; font-size:0.8rem;">Eliminar</button>`:''}</div>`;
-        });
-      } else html += '<p><small>Sin eventos</small></p>';
-      document.getElementById('content').innerHTML = html + '</div><button onclick="loadView(\'containers\')" class="secondary" style="margin-top:1rem;">⬅ Volver</button>';
+    function addEvent(cid) {
+      document.getElementById('content').innerHTML=`<h4 style="margin-top:0">📝 Evento</h4><form id="fe"><label>Fecha<input type="date" name="fecha" required style="margin-bottom:.5rem"></label><label>Tipo<select name="tipo" style="margin-bottom:.5rem"><option>foto</option><option>reparacion</option><option>pintura</option><option>mantenimiento</option><option>inspeccion</option><option>otro</option></select></label><label>Desc<textarea name="descripcion" rows="2" style="margin-bottom:.5rem"></textarea></label><label>Costo<input name="costo" type="number" min="0" placeholder="0" style="margin-bottom:.5rem"></label><label>Proveedor<input name="proveedor" style="margin-bottom:.5rem"></label><label>Fotos<input type="file" id="f-e" multiple accept="image/*" style="margin-bottom:.5rem"></label><button type="submit">Guardar</button> <button type="button" onclick="openHist('${cid}')" class="secondary">Cancelar</button></form>`;
+      document.getElementById('fe').onsubmit=async(e)=>{ e.preventDefault(); const f=new FormData(e.target), files=document.getElementById('f-e').files; let urls=[]; for(let i=0;i<Math.min(files.length,3);i++){ const p=`${cid}/${Date.now()}_${i}.jpg`; await supabase.storage.from('fotos-historial').upload(p,files[i]); urls.push(supabase.storage.from('fotos-historial').getPublicUrl(p).data.publicUrl); } await supabase.from('history_events').insert([{container_id:cid,fecha:f.get('fecha'),tipo:f.get('tipo'),descripcion:f.get('descripcion')||null,costo:parseInt(f.get('costo'))||0,proveedor:f.get('proveedor')||null,fotos:urls,created_by:user.id}]); await logA(`Evento en ${cid}`); openHist(cid); };
     }
 
-    function showAddEvent(cid) {
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">📝 Evento</h4>
-        <form id="form-e">
-          <label>Fecha<input type="date" name="fecha" required style="margin-bottom:0.5rem;"></label>
-          <label>Tipo<select name="tipo" style="margin-bottom:0.5rem;"><option>foto</option><option>reparacion</option><option>pintura</option><option>mantenimiento</option><option>inspeccion</option><option>otro</option></select></label>
-          <label>Desc<textarea name="descripcion" rows="2" style="margin-bottom:0.5rem;"></textarea></label>
-          <label>Costo<input name="costo" type="number" min="0" placeholder="0" style="margin-bottom:0.5rem;"></label>
-          <label>Proveedor<input name="proveedor" style="margin-bottom:0.5rem;"></label>
-          <label>Fotos (max 3)<input type="file" id="f-e" multiple accept="image/*" style="margin-bottom:0.5rem;"></label>
-          <button type="submit">Guardar</button> <button type="button" onclick="openHistorial('${cid}')" class="secondary">Cancelar</button>
-        </form>`;
-      document.getElementById('form-e').onsubmit = async (e) => {
-        e.preventDefault();
-        const f = new FormData(e.target);
-        const files = document.getElementById('f-e').files;
-        let urls = [];
-        for(let i=0; i<Math.min(files.length,3); i++){
-          const path = `${cid}/${Date.now()}_${i}.jpg`;
-          await supabase.storage.from('fotos-historial').upload(path, files[i]);
-          urls.push(supabase.storage.from('fotos-historial').getPublicUrl(path).data.publicUrl);
-        }
-        await supabase.from('history_events').insert([{
-          container_id: cid, fecha: f.get('fecha'), tipo: f.get('tipo'),
-          descripcion: f.get('descripcion')||null, costo: parseInt(f.get('costo'))||0,
-          proveedor: f.get('proveedor')||null, fotos: urls, created_by: user.id
-        }]);
-        await logActividad(`Evento en ${cid}`);
-        openHistorial(cid);
-      };
-    }
+    async function delEvt(id,cid) { if(!confirm('¿Eliminar?'))return; await supabase.from('history_events').delete().eq('id',id); openHist(cid); }
+    function showModal(u){document.getElementById('modal-img').src=u;document.getElementById('modal').style.display='flex'}
 
-    async function deleteEvent(id, cid) {
-      if(!confirm('¿Eliminar evento?')) return;
-      await supabase.from('history_events').delete().eq('id', id);
-      openHistorial(cid);
-    }
+    function renderClients() { let h=`<h4 style="margin-top:0">👥 Clientes</h4><button onclick="addCli()" style="margin-bottom:1rem">+ Nuevo</button><table><thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>CUIT</th><th>Tel</th></tr></thead><tbody>`; clients.forEach(c=>h+=`<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.tipo}</td><td>${c.cuit||'-'}</td><td>${c.tel||'-'}</td></tr>`); document.getElementById('content').innerHTML=h+'</tbody></table>'; }
+    function addCli() { document.getElementById('content').innerHTML=`<h4 style="margin-top:0">➕ Cliente</h4><form id="fcl"><label>ID<input name="id" placeholder="CLI-001" required style="margin-bottom:.5rem"></label><label>Nombre<input name="nombre" required style="margin-bottom:.5rem"></label><label>Tipo<select name="tipo" style="margin-bottom:.5rem"><option>Empresa</option><option>Persona</option></select></label><label>CUIT<input name="cuit" style="margin-bottom:.5rem"></label><label>Tel<input name="tel" style="margin-bottom:.5rem"></label><button type="submit">Guardar</button> <button type="button" onclick="loadView('clientes')" class="secondary">Cancelar</button></form>`; document.getElementById('fcl').onsubmit=async(e)=>{ e.preventDefault(); await supabase.from('clients').insert([Object.fromEntries(new FormData(e.target))]); await initApp(); loadView('clientes'); }; }
 
-    function showModal(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
+    function renderContratos() { let h=`<h4 style="margin-top:0">📋 Contratos</h4><button onclick="addCtr()" style="margin-bottom:1rem">+ Nuevo</button><table><thead><tr><th>ID</th><th>Cliente</th><th>Container</th><th>Inicio</th><th>Estado</th><th>Precio</th></tr></thead><tbody>`; contratos.forEach(ct=>{ const cl=clients.find(c=>c.id===ct.cliente_id), b=ct.estado==='Activo'?'badge-green':'badge-blue'; h+=`<tr><td>${ct.id}</td><td>${cl?.nombre||'-'}</td><td>${ct.container_id}</td><td>${ct.inicio}</td><td><span class="badge ${b}">${ct.estado}</span></td><td>$${(ct.precio_mes||0).toLocaleString()}</td></tr>`; }); document.getElementById('content').innerHTML=h+'</tbody></table>'; }
+    function addCtr() { const act=new Set(contratos.filter(c=>c.estado==='Activo').map(c=>c.container_id)), disp=containers.filter(c=>!act.has(c.id)); let co=disp.map(c=>`<option value="${c.id}">${c.id} (${c.tipo})</option>`).join(''), cli=clients.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join(''); document.getElementById('content').innerHTML=`<h4 style="margin-top:0">➕ Contrato</h4><form id="fct"><label>ID<input name="id" placeholder="CTR-001" required style="margin-bottom:.5rem"></label><label>Cliente<select name="cliente_id" required style="margin-bottom:.5rem"><option value="">Seleccionar...</option>${cli}</select></label><label>Container<select name="container_id" id="s-ctr" required style="margin-bottom:.5rem"><option value="">Seleccionar...</option>${co}</select></label><label>Inicio<input type="date" name="inicio" required style="margin-bottom:.5rem"></label><div class="card" id="r-ctr" style="margin:.5rem 0;background:#e7f1ff"><small>Seleccioná container</small></div><button type="submit">Guardar</button> <button type="button" onclick="loadView('contratos')" class="secondary">Cancelar</button></form>`; document.getElementById('s-ctr').onchange=e=>{ const t=containers.find(c=>c.id===e.target.value)?.tipo, p=t==='Container 12 pies'?80000:50000, d=t==='Container 12 pies'?160000:100000; document.getElementById('r-ctr').innerHTML=`💰 Precio: <strong>$${p.toLocaleString()}</strong> | 🛡️ Depósito: <strong>$${d.toLocaleString()}</strong>`; }; document.getElementById('fct').onsubmit=async(e)=>{ e.preventDefault(); const f=new FormData(e.target), t=containers.find(c=>c.id===f.get('container_id'))?.tipo; await supabase.from('contratos').insert([{id:f.get('id'),cliente_id:f.get('cliente_id'),container_id:f.get('container_id'),inicio:f.get('inicio'),fin:null,estado:'Activo',precio_mes:t==='Container 12 pies'?80000:50000,deposito:t==='Container 12 pies'?160000:100000,created_by:user.id}]); await logA(`Contrato ${f.get('id')} creado`); await initApp(); loadView('contratos'); }; }
 
-    // ============ CLIENTES ============
-    function renderClients() {
-      let html = `<h4 style="margin-top:0;">👥 Clientes</h4><button onclick="showAddClient()" style="margin-bottom:1rem;">+ Nuevo</button>
-        <table><thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>CUIT</th><th>Tel</th></tr></thead><tbody>`;
-      clients.forEach(c => html += `<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.tipo}</td><td>${c.cuit||'-'}</td><td>${c.tel||'-'}</td></tr>`);
-      document.getElementById('content').innerHTML = html + '</tbody></table>';
-    }
+    function renderCobros() { let h=`<h4 style="margin-top:0">💵 Cobros</h4><button onclick="addCob()" style="margin-bottom:1rem">+ Nuevo</button><table><thead><tr><th>ID</th><th>Contrato</th><th>Mes</th><th>Fecha</th><th>Monto</th><th>Venc.</th><th>Estado</th></tr></thead><tbody>`; cobros.forEach(c=>{ const b=c.estado==='Cobrado'?'badge-green':'badge-orange'; h+=`<tr><td>${c.id}</td><td>${c.contrato_id}</td><td>${c.mes}°</td><td>${c.fecha}</td><td>$${(c.monto||0).toLocaleString()}</td><td>${c.vencimiento||'-'}</td><td><span class="badge ${b}">${c.estado}</span></td></tr>`; }); document.getElementById('content').innerHTML=h+'</tbody></table>'; }
+    function addCob() { const act=contratos.filter(c=>c.estado==='Activo'), o=act.map(c=>`<option value="${c.id}">${c.id} - $${(c.precio_mes||0).toLocaleString()}</option>`).join(''); document.getElementById('content').innerHTML=`<h4 style="margin-top:0">➕ Cobro</h4><form id="fcb"><label>ID<input name="id" placeholder="COB-001" required style="margin-bottom:.5rem"></label><label>Contrato<select name="contrato_id" required style="margin-bottom:.5rem"><option value="">Seleccionar...</option>${o}</select></label><label>Mes N°<input name="mes" type="number" min="1" required style="margin-bottom:.5rem"></label><label>Fecha<input type="date" name="fecha" required style="margin-bottom:.5rem"></label><button type="submit">Guardar</button> <button type="button" onclick="loadView('cobros')" class="secondary">Cancelar</button></form>`; document.getElementById('fcb').onsubmit=async(e)=>{ e.preventDefault(); const f=new FormData(e.target), ctr=contratos.find(c=>c.id===f.get('contrato_id')), v=new Date(f.get('fecha')); v.setMonth(v.getMonth()+1); await supabase.from('cobros').insert([{id:f.get('id'),contrato_id:f.get('contrato_id'),mes:parseInt(f.get('mes')),fecha:f.get('fecha'),monto:ctr?.precio_mes||0,estado:'Cobrado',vencimiento:v.toISOString().split('T')[0],created_by:user.id}]); await logA(`Cobro ${f.get('id')} registrado`); await initApp(); loadView('cobros'); }; }
 
-    function showAddClient() {
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">➕ Cliente</h4>
-        <form id="form-cl">
-          <label>ID<input name="id" placeholder="CLI-001" required style="margin-bottom:0.5rem;"></label>
-          <label>Nombre<input name="nombre" required style="margin-bottom:0.5rem;"></label>
-          <label>Tipo<select name="tipo" style="margin-bottom:0.5rem;"><option>Empresa</option><option>Persona</option></select></label>
-          <label>CUIT/DNI<input name="cuit" style="margin-bottom:0.5rem;"></label>
-          <label>Tel<input name="tel" style="margin-bottom:0.5rem;"></label>
-          <button type="submit">Guardar</button> <button type="button" onclick="loadView('clientes')" class="secondary">Cancelar</button>
-        </form>`;
-      document.getElementById('form-cl').onsubmit = async (e) => {
-        e.preventDefault();
-        await supabase.from('clients').insert([Object.fromEntries(new FormData(e.target))]);
-        await initApp(); loadView('clientes');
-      };
-    }
-
-    // ============ CONTRATOS ============
-    function renderContratos() {
-      let html = `<h4 style="margin-top:0;">📋 Contratos</h4><button onclick="showAddContrato()" style="margin-bottom:1rem;">+ Nuevo</button>
-        <table><thead><tr><th>ID</th><th>Cliente</th><th>Container</th><th>Inicio</th><th>Estado</th><th>Precio</th></tr></thead><tbody>`;
-      contratos.forEach(ct => {
-        const cl = clients.find(c => c.id === ct.cliente_id);
-        const b = ct.estado==='Activo'?'badge-green':'badge-blue';
-        html += `<tr><td>${ct.id}</td><td>${cl?.nombre||'-'}</td><td>${ct.container_id}</td><td>${ct.inicio}</td><td><span class="badge ${b}">${ct.estado}</span></td><td>$${(ct.precio_mes||0).toLocaleString()}</td></tr>`;
-      });
-      document.getElementById('content').innerHTML = html + '</tbody></table>';
-    }
-
-    function showAddContrato() {
-      const activeIds = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      const disponibles = containers.filter(c => !activeIds.has(c.id));
-      let cOpts = disponibles.map(c => `<option value="${c.id}">${c.id} (${c.tipo})</option>`).join('');
-      let cliOpts = clients.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">➕ Contrato</h4>
-        <form id="form-ct">
-          <label>ID<input name="id" placeholder="CTR-001" required style="margin-bottom:0.5rem;"></label>
-          <label>Cliente<select name="cliente_id" required style="margin-bottom:0.5rem;"><option value="">Seleccionar...</option>${cliOpts}</select></label>
-          <label>Container<select name="container_id" id="s-ctr" required style="margin-bottom:0.5rem;"><option value="">Seleccionar...</option>${cOpts}</select></label>
-          <label>Inicio<input type="date" name="inicio" required style="margin-bottom:0.5rem;"></label>
-          <label>Fin (opcional)<input type="date" name="fin" style="margin-bottom:0.5rem;"></label>
-          <div class="card" id="res-ctr" style="margin:0.5rem 0; background:#e7f1ff;"><small>Seleccioná container</small></div>
-          <button type="submit">Guardar</button> <button type="button" onclick="loadView('contratos')" class="secondary">Cancelar</button>
-        </form>`;
-      document.getElementById('s-ctr').onchange = e => {
-        const tipo = containers.find(c => c.id === e.target.value)?.tipo;
-        const p = tipo==='Container 12 pies'?80000:50000;
-        const d = tipo==='Container 12 pies'?160000:100000;
-        document.getElementById('res-ctr').innerHTML = `💰 Precio: <strong>$${p.toLocaleString()}</strong> | 🛡️ Depósito: <strong>$${d.toLocaleString()}</strong>`;
-      };
-      document.getElementById('form-ct').onsubmit = async (e) => {
-        e.preventDefault();
-        const f = new FormData(e.target);
-        const tipo = containers.find(c => c.id === f.get('container_id'))?.tipo;
-        await supabase.from('contratos').insert([{
-          id: f.get('id'), cliente_id: f.get('cliente_id'), container_id: f.get('container_id'),
-          inicio: f.get('inicio'), fin: f.get('fin')||null, estado: 'Activo',
-          precio_mes: tipo==='Container 12 pies'?80000:50000,
-          deposito: tipo==='Container 12 pies'?160000:100000,
-          created_by: user.id
-        }]);
-        await logActividad(`Contrato ${f.get('id')} creado`);
-        await initApp(); loadView('contratos');
-      };
-    }
-
-    // ============ COBROS ============
-    function renderCobros() {
-      let html = `<h4 style="margin-top:0;">💵 Cobros</h4><button onclick="showAddCobro()" style="margin-bottom:1rem;">+ Nuevo</button>
-        <table><thead><tr><th>ID</th><th>Contrato</th><th>Mes</th><th>Fecha</th><th>Monto</th><th>Venc.</th><th>Estado</th></tr></thead><tbody>`;
-      cobros.forEach(c => {
-        const b = c.estado==='Cobrado'?'badge-green':'badge-orange';
-        html += `<tr><td>${c.id}</td><td>${c.contrato_id}</td><td>${c.mes}°</td><td>${c.fecha}</td><td>$${(c.monto||0).toLocaleString()}</td><td>${c.vencimiento||'-'}</td><td><span class="badge ${b}">${c.estado}</span></td></tr>`;
-      });
-      document.getElementById('content').innerHTML = html + '</tbody></table>';
-    }
-
-    function showAddCobro() {
-      const activos = contratos.filter(c => c.estado==='Activo');
-      let opts = activos.map(c => `<option value="${c.id}">${c.id} - $${(c.precio_mes||0).toLocaleString()}</option>`).join('');
-      document.getElementById('content').innerHTML = `
-        <h4 style="margin-top:0;">➕ Cobro</h4>
-        <form id="form-cb">
-          <label>ID<input name="id" placeholder="COB-001" required style="margin-bottom:0.5rem;"></label>
-          <label>Contrato<select name="contrato_id" required style="margin-bottom:0.5rem;"><option value="">Seleccionar...</option>${opts}</select></label>
-          <label>Mes N°<input name="mes" type="number" min="1" required style="margin-bottom:0.5rem;"></label>
-          <label>Fecha<input type="date" name="fecha" required style="margin-bottom:0.5rem;"></label>
-          <label>Estado<select name="estado" style="margin-bottom:0.5rem;"><option>Cobrado</option><option>Pendiente</option></select></label>
-          <button type="submit">Guardar</button> <button type="button" onclick="loadView('cobros')" class="secondary">Cancelar</button>
-        </form>`;
-      document.getElementById('form-cb').onsubmit = async (e) => {
-        e.preventDefault();
-        const f = new FormData(e.target);
-        const ctr = contratos.find(c => c.id === f.get('contrato_id'));
-        const venc = new Date(f.get('fecha')); venc.setMonth(venc.getMonth()+1);
-        await supabase.from('cobros').insert([{
-          id: f.get('id'), contrato_id: f.get('contrato_id'), mes: parseInt(f.get('mes')),
-          fecha: f.get('fecha'), monto: ctr?.precio_mes||0, estado: f.get('estado'),
-          vencimiento: venc.toISOString().split('T')[0], created_by: user.id
-        }]);
-        await logActividad(`Cobro ${f.get('id')} registrado`);
-        await initApp(); loadView('cobros');
-      };
-    }
-
-    // ============ UTILS ============
-    async function logActividad(txt) {
-      try { await supabase.from('activity_log').insert([{ txt, created_by: user.id }]); } catch(e){}
-    }
+    async function logA(t) { try{await supabase.from('activity_log').insert([{txt:t,created_by:user.id}])}catch(e){} }
   </script>
 </body>
 </html>
