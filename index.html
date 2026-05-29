@@ -77,49 +77,63 @@
     let role = 'operario';
     let containers = [], clients = [], contratos = [], cobros = [];
 
-    // ============ AUTENTICACIÓN ============
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('btn-login');
-      const originalText = btn.textContent;
-      btn.textContent = 'Entrando...'; btn.disabled = true;
-      
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: document.getElementById('email').value.trim(),
-          password: document.getElementById('password').value
-        });
-        
-        if (error) throw error;
-        
-        user = data.user;
-        await loadProfile();
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
-        await initApp();
-      } catch (err) {
-        document.getElementById('login-error').textContent = '❌ ' + err.message;
-      } finally {
-        btn.textContent = originalText; btn.disabled = false;
-      }
-    });
+    // ============ AUTENTICACIÓN CORREGIDA ============
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('login-form');
+      const loginScreen = document.getElementById('login-screen');
+      const appScreen = document.getElementById('app-screen');
+      const loginError = document.getElementById('login-error');
+      const btnLogin = document.getElementById('btn-login');
 
-    document.getElementById('logout-btn').onclick = async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    };
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // ✅ Evita que la página se recargue
+        loginError.textContent = '';
+        
+        const email = document.getElementById('email').value.trim();
+        const pass = document.getElementById('password').value;
+        if (!email || !pass) { loginError.textContent = '⚠️ Completá email y contraseña'; return; }
 
-    async function loadProfile() {
+        btnLogin.textContent = 'Verificando...'; btnLogin.disabled = true;
+
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+          if (error) throw new Error(error.message);
+          
+          user = data.user;
+          console.log('✅ Login exitoso:', user.email);
+
+          // ✅ Cambiamos pantalla INMEDIATAMENTE después del login
+          loginScreen.classList.add('hidden');
+          appScreen.classList.remove('hidden');
+
+          // Cargamos perfil y datos en segundo plano
+          async function loadProfile() {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        const { data, error } = await supabase.from('profiles').select('role').eq('id', user.id).single();
         if (!error && data) role = data.role;
-      } catch(e) { console.log('Perfil no cargado, usando rol por defecto'); }
-      document.getElementById('user-role').textContent = role.toUpperCase();
+      } catch(e) { console.log('Perfil pendiente de carga'); }
     }
+
+    async function initApp() {
+      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando módulos...</div>';
+      try {
+        const [c1, c2, c3, c4] = await Promise.all([
+          supabase.from('containers').select('*'),
+          supabase.from('clients').select('*'),
+          supabase.from('contratos').select('*'),
+          supabase.from('cobros').select('*')
+        ]);
+        containers = c1.data || [];
+        clients = c2.data || [];
+        contratos = c3.data || [];
+        cobros = c4.data || [];
+        renderDashboard();
+      } catch(err) {
+        document.getElementById('content').innerHTML = `<p style="color:red">⚠️ Error cargando datos: ${err.message}<br><small>Revisá conexión o políticas RLS</small></p>`;
+      }
+    }
+
+
 
     // ============ NAVEGACIÓN ============
     document.querySelectorAll('nav a').forEach(link => {
