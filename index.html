@@ -12,95 +12,126 @@
     .card { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6; }
     .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; color: #fff; }
     .badge-green { background: #198754; } .badge-blue { background: #0d6efd; } .badge-orange { background: #fd7e14; }
-    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
     .timeline-item { border-left: 3px solid #0d6efd; padding-left: 1rem; margin-bottom: 1rem; }
-    img.thumb { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; cursor: pointer; }
-    #modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index: 999; }
+    img.thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; margin: 2px; }
+    #modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index: 999; }
     #modal img { max-width: 95%; max-height: 95%; border-radius: 8px; }
     nav a { margin-right: 1rem; font-weight: bold; text-decoration: none; color: #0d6efd; }
     .loading { text-align: center; padding: 2rem; color: #666; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #dee2e6; }
+    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
     th { background: #f1f3f5; }
+    input, select, textarea { width: 100%; margin-bottom: 0.5rem; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
   </style>
 </head>
 <body>
+  <!-- LOGIN -->
   <div id="login-screen">
     <h2>🔐 Acceso Sistema</h2>
     <form id="login-form">
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="password" placeholder="Contraseña" required>
       <button type="submit" id="btn-login">Ingresar</button>
-      <p id="login-error" style="color:red"></p>
+      <p id="login-error" style="color:red; font-size: 0.9rem;"></p>
     </form>
   </div>
 
+  <!-- APP -->
   <div id="app-screen" class="hidden">
-    <header style="display:flex; justify-content:space-between; align-items:center;">
-      <h3>🏗️ Containers Obradores</h3>
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+      <h3 style="margin:0;">🏗️ Containers Obradores</h3>
       <div style="display:flex; gap:0.5rem; align-items:center;">
-        <span id="user-role" class="badge badge-green">Cargando...</span>
-        <button id="logout-btn" class="secondary" style="padding:0.3rem 0.6rem;">Salir</button>
+        <span id="user-role" class="badge badge-green">...</span>
+        <button id="logout-btn" class="secondary" style="padding:0.3rem 0.6rem; font-size:0.9rem;">Salir</button>
       </div>
     </header>
-    <nav>
+
+    <nav style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee;">
       <a href="#" data-view="dashboard">🏠 Inicio</a>
       <a href="#" data-view="containers">📦 Containers</a>
       <a href="#" data-view="clientes">👥 Clientes</a>
       <a href="#" data-view="contratos">📋 Contratos</a>
       <a href="#" data-view="cobros">💵 Cobros</a>
     </nav>
+
     <main id="content" class="card"></main>
   </div>
 
-  <div id="modal" onclick="this.style.display='none'"><img id="modal-img"></div>
+  <!-- MODAL FOTOS -->
+  <div id="modal" onclick="this.style.display='none'"><img id="modal-img" style="max-width:100%; max-height:100%;"></div>
 
+  <!-- SUPABASE SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
-    if (typeof window.supabaseClient === 'undefined')
-
-
-if (typeof window.supabaseClient === 'undefined') {
-  const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4d2lzaXdkdWd3ZXZ5ZW50cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzQyMzAsImV4cCI6MjA5NTU1MDIzMH0._aTZ6TMG3tTr5ZSvxJ9Vld8fCeLafR77TBeVJAYsqDA';
-  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-}
-const supabase = window.supabaseClient;
-
-
+    // 🔴 CONFIGURACIÓN - REEMPLAZAR CON TUS DATOS REALES
+    const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_nbbeIEpXzHM1GWsMqTxe6w_gyvVCPiQ';
     
-    let user = null, role = 'operario';
+    // ✅ Inicialización SEGURA: solo se crea una vez aunque se recargue el script
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Variables globales
+    let user = null;
+    let role = 'operario';
     let containers = [], clients = [], contratos = [], cobros = [];
 
+    // ============ AUTENTICACIÓN ============
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btn-login');
+      const originalText = btn.textContent;
       btn.textContent = 'Entrando...'; btn.disabled = true;
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-      });
-      btn.textContent = 'Ingresar'; btn.disabled = false;
-      if (error) return document.getElementById('login-error').textContent = error.message;
-      user = data.user;
-      await loadProfile();
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('app-screen').classList.remove('hidden');
-      await initApp();
+      
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value
+        });
+        
+        if (error) throw error;
+        
+        user = data.user;
+        await loadProfile();
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        await initApp();
+      } catch (err) {
+        document.getElementById('login-error').textContent = '❌ ' + err.message;
+      } finally {
+        btn.textContent = originalText; btn.disabled = false;
+      }
     });
 
-    document.getElementById('logout-btn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+    document.getElementById('logout-btn').onclick = async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    };
 
     async function loadProfile() {
-      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      role = data?.role || 'operario';
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) role = data.role;
+      } catch(e) { console.log('Perfil no cargado, usando rol por defecto'); }
       document.getElementById('user-role').textContent = role.toUpperCase();
     }
 
-    document.querySelectorAll('nav a').forEach(a => a.onclick = e => { e.preventDefault(); loadView(a.dataset.view); });
+    // ============ NAVEGACIÓN ============
+    document.querySelectorAll('nav a').forEach(link => {
+      link.onclick = (e) => {
+        e.preventDefault();
+        loadView(link.dataset.view);
+      };
+    });
 
     async function loadView(view) {
       document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando...</div>';
+      
       if (view === 'dashboard') await renderDashboard();
       else if (view === 'containers') await renderContainers();
       else if (view === 'clientes') await renderClients();
@@ -108,266 +139,502 @@ const supabase = window.supabaseClient;
       else if (view === 'cobros') await renderCobros();
     }
 
+    // ============ CARGA INICIAL ============
     async function initApp() {
-      await Promise.all([
-        supabase.from('containers').select('*').then(r => containers = r.data || []),
-        supabase.from('clients').select('*').then(r => clients = r.data || []),
-        supabase.from('contratos').select('*').then(r => contratos = r.data || []),
-        supabase.from('cobros').select('*').then(r => cobros = r.data || [])
-      ]);
-      loadView('dashboard');
+      try {
+        const [c1, c2, c3, c4] = await Promise.all([
+          supabase.from('containers').select('*'),
+          supabase.from('clients').select('*'),
+          supabase.from('contratos').select('*'),
+          supabase.from('cobros').select('*')
+        ]);
+        containers = c1.data || [];
+        clients = c2.data || [];
+        contratos = c3.data || [];
+        cobros = c4.data || [];
+        loadView('dashboard');
+      } catch(err) {
+        document.getElementById('content').innerHTML = `<p style="color:red">⚠️ Error cargando datos: ${err.message}</p>`;
+      }
     }
 
+    // ============ DASHBOARD ============
     async function renderDashboard() {
-      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      const alquilados = containers.filter(c => active.has(c.id)).length;
+      const activeContainerIds = new Set(
+        contratos.filter(c => c.estado === 'Activo').map(c => c.container_id)
+      );
+      const alquilados = containers.filter(c => activeContainerIds.has(c.id)).length;
       const disponibles = containers.length - alquilados;
-      const cobrados = cobros.filter(c => c.estado === 'Cobrado').reduce((s,c) => s + c.monto, 0);
+      const cobrados = cobros.filter(c => c.estado === 'Cobrado').reduce((sum, c) => sum + (c.monto || 0), 0);
       const pendientes = cobros.filter(c => c.estado === 'Pendiente').length;
       
-      document.getElementById('content').innerHTML = `
-        <h4>📊 Resumen</h4>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin:1rem 0;">
-          <div class="card" style="text-align:center"><h2 style="margin:0">${alquilados}</h2><small>Alquilados</small></div>
-          <div class="card" style="text-align:center"><h2 style="margin:0">${disponibles}</h2><small>Disponibles</small></div>
-          <div class="card" style="text-align:center"><h2 style="margin:0">$${cobrados.toLocaleString()}</h2><small>Ingresos</small></div>
-          <div class="card" style="text-align:center"><h2 style="margin:0; color:#fd7e14">${pendientes}</h2><small>Pendientes</small></div>
+      let html = `
+        <h4 style="margin-top:0;">📊 Resumen</h4>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.8rem; margin:1rem 0;">
+          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">${alquilados}</h2><small>Alquilados</small></div>
+          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">${disponibles}</h2><small>Disponibles</small></div>
+          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0;">$${cobrados.toLocaleString()}</h2><small>Ingresos</small></div>
+          <div class="card" style="text-align:center; margin:0;"><h2 style="margin:0.3rem 0; color:#fd7e14;">${pendientes}</h2><small>Pendientes</small></div>
         </div>
-        <h5>📝 Actividad Reciente</h5><div id="recent-activity"></div>`;
+        <h5>📝 Actividad Reciente</h5>
+        <div id="recent-activity"><small>Cargando...</small></div>
+      `;
+      document.getElementById('content').innerHTML = html;
       loadRecentActivity();
     }
 
     async function loadRecentActivity() {
-      const { data } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5);
-      let html = '<ul>';
-      data?.forEach(a => html += `<li>${new Date(a.created_at).toLocaleDateString()} - ${a.txt}</li>`);
-      document.getElementById('recent-activity').innerHTML = html || '<li>Sin actividad</li>';
+      try {
+        const { data } = await supabase
+          .from('activity_log')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        let html = '<ul style="margin:0; padding-left:1.2rem; font-size:0.9rem;">';
+        if (data && data.length > 0) {
+          data.forEach(a => {
+            const fecha = new Date(a.created_at).toLocaleDateString('es-AR');
+            html += `<li>${fecha} - ${a.txt}</li>`;
+          });
+        } else {
+          html += '<li><small>Sin actividad reciente</small></li>';
+        }
+        html += '</ul>';
+        document.getElementById('recent-activity').innerHTML = html;
+      } catch(e) {
+        document.getElementById('recent-activity').innerHTML = '<small>Error cargando actividad</small>';
+      }
     }
 
+    // ============ CONTAINERS ============
     async function renderContainers() {
-      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      let html = `<h4>📦 Inventario</h4><button onclick="showAddContainerForm()">+ Nuevo</button><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem; margin-top:1rem;">`;
+      const activeIds = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
+      
+      let html = `<h4 style="margin-top:0;">📦 Inventario</h4>
+        <button onclick="showAddContainerForm()" style="margin-bottom:1rem;">+ Nuevo Container</button>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;">`;
+      
       containers.forEach(c => {
-        const est = active.has(c.id) ? 'Alquilado' : 'Disponible';
-        const badge = est === 'Alquilado' ? 'badge-green' : 'badge-blue';
-        html += `<div class="card">
-          <div style="display:flex; justify-content:space-between"><h5 style="margin:0">${c.id} | ${c.tipo}</h5><span class="badge ${badge}">${est}</span></div>
-          <p><small>${c.dim || '-'} | Año: ${c.anio || '-'}</small></p>
-          <p><small>${c.obs || ''}</small></p>
-          <button onclick="openHistorial('${c.id}')" style="margin-right:0.5rem">📜 Historial</button>
-          ${role === 'admin' ? `<button onclick="deleteContainer('${c.id}')" class="secondary">🗑️</button>` : ''}
-        </div>`;
+        const estado = activeIds.has(c.id) ? 'Alquilado' : 'Disponible';
+        const badgeClass = estado === 'Alquilado' ? 'badge-green' : 'badge-blue';
+        html += `
+          <div class="card" style="margin:0;">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+              <h5 style="margin:0 0 0.5rem 0;">${c.id} | ${c.tipo}</h5>
+              <span class="badge ${badgeClass}">${estado}</span>
+            </div>
+            <p style="margin:0.3rem 0; font-size:0.9rem;"><small>${c.dim || '-'} | Año: ${c.anio || '-'}</small></p>
+            <p style="margin:0.3rem 0; font-size:0.9rem;"><small>${c.obs || ''}</small></p>
+            <button onclick="openHistorial('${c.id}')" style="margin-right:0.5rem; padding:0.3rem 0.6rem;">📜 Historial</button>
+            ${role === 'admin' ? `<button onclick="deleteContainer('${c.id}')" class="secondary" style="padding:0.3rem 0.6rem;">🗑️</button>` : ''}
+          </div>`;
       });
-      document.getElementById('content').innerHTML = html + '</div>';
+      html += '</div>';
+      document.getElementById('content').innerHTML = html;
     }
 
     function showAddContainerForm() {
       document.getElementById('content').innerHTML = `
-        <h4>➕ Nuevo Container</h4>
+        <h4 style="margin-top:0;">➕ Nuevo Container</h4>
         <form id="form-container">
-          <input name="id" placeholder="ID (ej: C001)" required>
-          <select name="tipo"><option>Container 6 pies</option><option>Container 12 pies</option></select>
-          <input name="dim" placeholder="Dimensiones (opcional)">
-          <input name="anio" type="number" placeholder="Año">
-          <textarea name="obs" placeholder="Observaciones"></textarea>
-          <button type="submit">Guardar</button>
-          <button type="button" onclick="loadView('containers')" class="secondary">Cancelar</button>
+          <label>ID único (ej: C001)<input name="id" placeholder="C001" required pattern="[A-Za-z0-9\-]+" style="margin-bottom:0.8rem;"></label>
+          <label>Tipo<select name="tipo" style="margin-bottom:0.8rem;"><option>Container 6 pies</option><option>Container 12 pies</option></select></label>
+          <label>Dimensiones (opcional)<input name="dim" placeholder="2.4m × 1.8m × 2.1h" style="margin-bottom:0.8rem;"></label>
+          <label>Año de fabricación<input name="anio" type="number" placeholder="2020" style="margin-bottom:0.8rem;"></label>
+          <label>Observaciones<textarea name="obs" rows="3" placeholder="Detalles adicionales..." style="margin-bottom:0.8rem;"></textarea></label>
+          <div class="btn-group">
+            <button type="submit">💾 Guardar</button>
+            <button type="button" onclick="loadView('containers')" class="secondary">Cancelar</button>
+          </div>
         </form>`;
-      document.getElementById('form-container').onsubmit = async e => {
+      
+      document.getElementById('form-container').onsubmit = async (e) => {
         e.preventDefault();
-        const f = new FormData(e.target);
-        await supabase.from('containers').insert(Object.fromEntries(f));
-        await logActividad(`Se agregó container ${f.get('id')}`);
-        await initApp(); loadView('containers');
+        const form = e.target;
+        const data = Object.fromEntries(new FormData(form));
+        
+        try {
+          await supabase.from('containers').insert([{
+            id: data.id.trim(),
+            tipo: data.tipo,
+            dim: data.dim || null,
+            anio: data.anio ? parseInt(data.anio) : null,
+            obs: data.obs || null
+          }]);
+          await logActividad(`Se agregó container ${data.id}`);
+          await initApp();
+          loadView('containers');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
       };
     }
 
     async function deleteContainer(id) {
-      if(!confirm('¿Eliminar este container?')) return;
-      await supabase.from('containers').delete().eq('id', id);
-      await initApp(); loadView('containers');
+      if(!confirm(`¿Eliminar permanentemente el container ${id}?`)) return;
+      try {
+        await supabase.from('containers').delete().eq('id', id);
+        await logActividad(`Se eliminó container ${id}`);
+        await initApp();
+        loadView('containers');
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
     }
 
+    // ============ HISTORIAL ============
     async function openHistorial(containerId) {
-      const { data } = await supabase.from('history_events').select('*').eq('container_id', containerId).order('fecha', { ascending: false });
-      let html = `<h4>📜 Historial: ${containerId}</h4><button onclick="showAddEvent('${containerId}')">+ Registrar Evento</button><div style="margin-top:1rem;">`;
-      data?.forEach(ev => {
-        let fotosHtml = '';
-        ev.fotos?.forEach(url => fotosHtml += `<img src="${url}" class="thumb" onclick="showModal('${url}')" style="width:80px; height:60px; object-fit:cover; margin:4px;">`);
-        html += `<div class="timeline-item">
-          <strong>${ev.fecha} | ${ev.tipo.toUpperCase()}</strong><br>
-          ${ev.descripcion || ''} ${ev.costo ? `<br>💰 Costo: $${ev.costo} - Proveedor: ${ev.proveedor || '-'}` : ''}
-          <div style="margin-top:0.5rem;">${fotosHtml}</div>
-          <small>${role === 'admin' ? `<button onclick="deleteEvent('${ev.id}','${containerId}')" class="secondary">Eliminar</button>` : ''}</small>
-        </div>`;
-      });
-      document.getElementById('content').innerHTML = html + `</div><button onclick="loadView('containers')" class="secondary" style="margin-top:1rem;">⬅ Volver</button>`;
+      document.getElementById('content').innerHTML = '<div class="loading">⏳ Cargando historial...</div>';
+      
+      try {
+        const { data } = await supabase
+          .from('history_events')
+          .select('*')
+          .eq('container_id', containerId)
+          .order('fecha', { ascending: false });
+        
+        let html = `<h4 style="margin-top:0;">📜 Historial: ${containerId}</h4>
+          <button onclick="showAddEvent('${containerId}')" style="margin:0.5rem 0;">+ Registrar Evento</button>
+          <div style="margin-top:1rem;">`;
+        
+        if (data && data.length > 0) {
+          data.forEach(ev => {
+            let fotosHtml = '';
+            if (ev.fotos && ev.fotos.length > 0) {
+              fotosHtml = '<div style="margin-top:0.5rem;">';
+              ev.fotos.forEach(url => {
+                fotosHtml += `<img src="${url}" class="thumb" onclick="event.stopPropagation(); showModal('${url}')">`;
+              });
+              fotosHtml += '</div>';
+            }
+            
+            const costoTxt = ev.costo ? `<br><small>💰 $${ev.costo.toLocaleString()} ${ev.proveedor ? `- ${ev.proveedor}` : ''}</small>` : '';
+            
+            html += `
+              <div class="timeline-item" style="margin-bottom:1.2rem;">
+                <strong style="font-size:0.95rem;">${ev.fecha} | ${ev.tipo.toUpperCase()}</strong><br>
+                <small style="color:#555;">${ev.descripcion || ''}${costoTxt}</small>
+                ${fotosHtml}
+                ${role === 'admin' ? `<br><button onclick="deleteEvent('${ev.id}','${containerId}')" class="secondary" style="margin-top:0.5rem; padding:0.2rem 0.5rem; font-size:0.8rem;">Eliminar</button>` : ''}
+              </div>`;
+          });
+        } else {
+          html += '<p><small>Sin eventos registrados</small></p>';
+        }
+        
+        html += `</div><button onclick="loadView('containers')" class="secondary" style="margin-top:1rem;">⬅ Volver</button>`;
+        document.getElementById('content').innerHTML = html;
+      } catch(err) {
+        document.getElementById('content').innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+      }
     }
 
     function showAddEvent(containerId) {
       document.getElementById('content').innerHTML = `
-        <h4>📝 Nuevo Evento</h4>
+        <h4 style="margin-top:0;">📝 Nuevo Evento</h4>
         <form id="form-event">
           <input type="hidden" name="container_id" value="${containerId}">
-          <input type="date" name="fecha" required>
-          <select name="tipo"><option>foto</option><option>reparacion</option><option>pintura</option><option>mantenimiento</option><option>inspeccion</option><option>otro</option></select>
-          <textarea name="descripcion" placeholder="Descripción"></textarea>
-          <input name="costo" type="number" placeholder="Costo ($)">
-          <input name="proveedor" placeholder="Proveedor">
-          <label>Subir Fotos (max 3)<input type="file" id="foto-input" multiple accept="image/*"></label>
-          <button type="submit">Guardar</button>
-          <button type="button" onclick="openHistorial('${containerId}')" class="secondary">Cancelar</button>
+          <label>Fecha<input type="date" name="fecha" required style="margin-bottom:0.8rem;"></label>
+          <label>Tipo<select name="tipo" style="margin-bottom:0.8rem;">
+            <option value="foto">📷 Foto</option>
+            <option value="reparacion">🔧 Reparación</option>
+            <option value="pintura">🎨 Pintura</option>
+            <option value="mantenimiento">⚙️ Mantenimiento</option>
+            <option value="inspeccion">👁️ Inspección</option>
+            <option value="otro">📋 Otro</option>
+          </select></label>
+          <label>Descripción<textarea name="descripcion" rows="3" placeholder="Detalles del evento..." style="margin-bottom:0.8rem;"></textarea></label>
+          <label>Costo ($)<input name="costo" type="number" placeholder="0" min="0" style="margin-bottom:0.8rem;"></label>
+          <label>Proveedor (opcional)<input name="proveedor" placeholder="Nombre del proveedor" style="margin-bottom:0.8rem;"></label>
+          <label>Fotos (máx. 3)<input type="file" id="foto-input" multiple accept="image/*" style="margin-bottom:0.8rem;"></label>
+          <div class="btn-group">
+            <button type="submit">💾 Guardar</button>
+            <button type="button" onclick="openHistorial('${containerId}')" class="secondary">Cancelar</button>
+          </div>
         </form>`;
-      document.getElementById('form-event').onsubmit = async e => {
+      
+      document.getElementById('form-event').onsubmit = async (e) => {
         e.preventDefault();
-        const f = new FormData(e.target);
+        const form = e.target;
+        const formData = new FormData(form);
         const files = document.getElementById('foto-input').files;
-        let urls = [];
-        for(let i=0; i<Math.min(files.length, 3); i++){
-          const path = `${containerId}/${Date.now()}_${i}.jpg`;
-          await supabase.storage.from('fotos-historial').upload(path, files[i]);
-          urls.push(supabase.storage.from('fotos-historial').getPublicUrl(path).data.publicUrl);
+        
+        // Subir fotos a Supabase Storage
+        let fotoUrls = [];
+        for (let i = 0; i < Math.min(files.length, 3); i++) {
+          const file = files[i];
+          const fileName = `${containerId}/${Date.now()}_${i}_${file.name}`;
+          try {
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('fotos-historial')
+              .upload(fileName, file);
+            if (!uploadError) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('fotos-historial')
+                .getPublicUrl(fileName);
+              fotoUrls.push(publicUrl);
+            }
+          } catch(err) { console.log('Error subiendo foto:', err); }
         }
-        await supabase.from('history_events').insert({
-          container_id: f.get('container_id'),
-          fecha: f.get('fecha'),
-          tipo: f.get('tipo'),
-          descripcion: f.get('descripcion'),
-          costo: parseInt(f.get('costo')) || 0,
-          proveedor: f.get('proveedor'),
-          fotos: urls,
-          created_by: user.id
-        });
-        await logActividad(`Historial actualizado en ${containerId}`);
-        openHistorial(containerId);
+        
+        try {
+          await supabase.from('history_events').insert([{
+            container_id: formData.get('container_id'),
+            fecha: formData.get('fecha'),
+            tipo: formData.get('tipo'),
+            descripcion: formData.get('descripcion') || null,
+            costo: formData.get('costo') ? parseInt(formData.get('costo')) : 0,
+            proveedor: formData.get('proveedor') || null,
+            fotos: fotoUrls,
+            created_by: user.id
+          }]);
+          await logActividad(`Evento registrado en ${containerId}`);
+          openHistorial(containerId);
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
       };
     }
 
-    async function deleteEvent(id, cid) {
-      if(!confirm('¿Eliminar evento?')) return;
-      await supabase.from('history_events').delete().eq('id', id);
-      openHistorial(cid);
+    async function deleteEvent(eventId, containerId) {
+      if(!confirm('¿Eliminar este evento del historial?')) return;
+      try {
+        await supabase.from('history_events').delete().eq('id', eventId);
+        openHistorial(containerId);
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
     }
 
-    function showModal(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
+    function showModal(url) {
+      document.getElementById('modal-img').src = url;
+      document.getElementById('modal').style.display = 'flex';
+    }
 
+    // ============ CLIENTES ============
     async function renderClients() {
-      let html = `<h4>👥 Clientes</h4><button onclick="showAddClient()">+ Nuevo</button><table><thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>CUIT/DNI</th><th>Tel</th></tr></thead><tbody>`;
-      clients.forEach(c => html += `<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.tipo}</td><td>${c.cuit || '-'}</td><td>${c.tel || '-'}</td></tr>`);
-      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+      let html = `<h4 style="margin-top:0;">👥 Clientes</h4>
+        <button onclick="showAddClient()" style="margin-bottom:1rem;">+ Nuevo Cliente</button>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>CUIT/DNI</th><th>Teléfono</th></tr></thead>
+          <tbody>`;
+      
+      clients.forEach(c => {
+        html += `<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.tipo}</td><td>${c.cuit || '-'}</td><td>${c.tel || '-'}</td></tr>`;
+      });
+      
+      html += `</tbody></table></div>`;
+      document.getElementById('content').innerHTML = html;
     }
 
     function showAddClient() {
       document.getElementById('content').innerHTML = `
-        <h4>➕ Nuevo Cliente</h4>
+        <h4 style="margin-top:0;">➕ Nuevo Cliente</h4>
         <form id="form-client">
-          <input name="id" placeholder="ID (ej: CLI-001)" required>
-          <input name="nombre" placeholder="Nombre completo o razón social" required>
-          <select name="tipo"><option>Empresa</option><option>Persona</option></select>
-          <input name="cuit" placeholder="CUIT/DNI">
-          <input name="tel" placeholder="Teléfono">
-          <input name="email" type="email" placeholder="Email">
-          <button type="submit">Guardar</button>
-          <button type="button" onclick="loadView('clientes')" class="secondary">Cancelar</button>
+          <label>ID único (ej: CLI-001)<input name="id" placeholder="CLI-001" required pattern="CLI-[0-9]+" style="margin-bottom:0.8rem;"></label>
+          <label>Nombre / Razón Social<input name="nombre" placeholder="Nombre completo o empresa" required style="margin-bottom:0.8rem;"></label>
+          <label>Tipo<select name="tipo" style="margin-bottom:0.8rem;"><option>Empresa</option><option>Persona</option></select></label>
+          <label>CUIT / DNI<input name="cuit" placeholder="20-12345678-9" style="margin-bottom:0.8rem;"></label>
+          <label>Teléfono<input name="tel" placeholder="+54 264 123-4567" style="margin-bottom:0.8rem;"></label>
+          <label>Email<input name="email" type="email" placeholder="cliente@email.com" style="margin-bottom:0.8rem;"></label>
+          <div class="btn-group">
+            <button type="submit">💾 Guardar</button>
+            <button type="button" onclick="loadView('clientes')" class="secondary">Cancelar</button>
+          </div>
         </form>`;
-      document.getElementById('form-client').onsubmit = async e => {
+      
+      document.getElementById('form-client').onsubmit = async (e) => {
         e.preventDefault();
-        await supabase.from('clients').insert(Object.fromEntries(new FormData(e.target)));
-        await initApp(); loadView('clientes');
+        try {
+          await supabase.from('clients').insert([Object.fromEntries(new FormData(e.target))]);
+          await initApp();
+          loadView('clientes');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
       };
     }
 
+    // ============ CONTRATOS ============
     async function renderContratos() {
-      let html = `<h4>📋 Contratos</h4><button onclick="showAddContrato()">+ Nuevo</button><table><thead><tr><th>ID</th><th>Cliente</th><th>Container</th><th>Inicio</th><th>Estado</th><th>Precio</th></tr></thead><tbody>`;
+      let html = `<h4 style="margin-top:0;">📋 Contratos</h4>
+        <button onclick="showAddContrato()" style="margin-bottom:1rem;">+ Nuevo Contrato</button>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>ID</th><th>Cliente</th><th>Container</th><th>Inicio</th><th>Estado</th><th>Precio/mes</th></tr></thead>
+          <tbody>`;
+      
       contratos.forEach(ct => {
-        const cl = clients.find(c => c.id === ct.cliente_id);
-        html += `<tr><td>${ct.id}</td><td>${cl?.nombre || '-'}</td><td>${ct.container_id}</td><td>${ct.inicio}</td><td><span class="badge ${ct.estado==='Activo'?'badge-green':'badge-blue'}">${ct.estado}</span></td><td>$${ct.precio_mes?.toLocaleString() || '-'}</td></tr>`;
+        const cliente = clients.find(c => c.id === ct.cliente_id);
+        const badgeClass = ct.estado === 'Activo' ? 'badge-green' : 'badge-blue';
+        html += `<tr>
+          <td>${ct.id}</td>
+          <td>${cliente?.nombre || '-'}</td>
+          <td>${ct.container_id}</td>
+          <td>${ct.inicio}</td>
+          <td><span class="badge ${badgeClass}">${ct.estado}</span></td>
+          <td>$${(ct.precio_mes || 0).toLocaleString()}</td>
+        </tr>`;
       });
-      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+      
+      html += `</tbody></table></div>`;
+      document.getElementById('content').innerHTML = html;
     }
 
     function showAddContrato() {
-      const active = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
-      const available = containers.filter(c => !active.has(c.id));
-      let opts = available.map(c => `<option value="${c.id}">${c.id} (${c.tipo})</option>`).join('');
-      let cliOpts = clients.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      // Obtener containers disponibles (sin contrato activo)
+      const activeIds = new Set(contratos.filter(c => c.estado === 'Activo').map(c => c.container_id));
+      const disponibles = containers.filter(c => !activeIds.has(c.id));
+      
+      let containerOpts = disponibles.map(c => `<option value="${c.id}">${c.id} - ${c.tipo}</option>`).join('');
+      let clientOpts = clients.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       
       document.getElementById('content').innerHTML = `
-        <h4>➕ Nuevo Contrato</h4>
+        <h4 style="margin-top:0;">➕ Nuevo Contrato</h4>
         <form id="form-ctr">
-          <input name="id" placeholder="ID Contrato (ej: CTR-001)" required>
-          <select name="cliente_id"><option value="">Seleccionar cliente</option>${cliOpts}</select>
-          <select name="container_id" id="ctr-cont"><option value="">Seleccionar container</option>${opts}</select>
-          <input type="date" name="inicio" required>
-          <input type="date" name="fin" placeholder="Opcional">
-          <select name="estado"><option>Activo</option><option>Finalizado</option></select>
-          <div class="card" id="resumen-ctr">Seleccioná container para ver precios</div>
-          <button type="submit">Guardar</button>
-          <button type="button" onclick="loadView('contratos')" class="secondary">Cancelar</button>
+          <label>ID Contrato (ej: CTR-001)<input name="id" placeholder="CTR-001" required pattern="CTR-[0-9]+" style="margin-bottom:0.8rem;"></label>
+          <label>Cliente<select name="cliente_id" required style="margin-bottom:0.8rem;"><option value="">Seleccionar...</option>${clientOpts}</select></label>
+          <label>Container disponible<select name="container_id" id="ctr-cont" required style="margin-bottom:0.8rem;"><option value="">Seleccionar...</option>${containerOpts}</select></label>
+          <label>Fecha de inicio<input type="date" name="inicio" required style="margin-bottom:0.8rem;"></label>
+          <label>Fecha de fin (opcional)<input type="date" name="fin" style="margin-bottom:0.8rem;"></label>
+          <label>Estado<select name="estado" style="margin-bottom:0.8rem;"><option>Activo</option><option>Finalizado</option></select></label>
+          <div class="card" id="resumen-ctr" style="margin:1rem 0; background:#e7f1ff; border-color:#0d6efd;">
+            <small>Seleccioná un container para ver precios automáticos</small>
+          </div>
+          <div class="btn-group">
+            <button type="submit">💾 Crear Contrato</button>
+            <button type="button" onclick="loadView('contratos')" class="secondary">Cancelar</button>
+          </div>
         </form>`;
       
-      document.getElementById('ctr-cont').onchange = e => {
-        const tipo = containers.find(c => c.id === e.target.value)?.tipo;
+      // Mostrar precios al seleccionar container
+      document.getElementById('ctr-cont').onchange = (e) => {
+        const container = containers.find(c => c.id === e.target.value);
+        if (container) {
+          const tipo = container.tipo;
+          const precio = tipo === 'Container 12 pies' ? 80000 : 50000;
+          const deposito = tipo === 'Container 12 pies' ? 160000 : 100000;
+          document.getElementById('resumen-ctr').innerHTML = `
+            <strong>💰 Precio/mes:</strong> $${precio.toLocaleString()}<br>
+            <strong>🛡️ Depósito:</strong> $${deposito.toLocaleString()}<br>
+            <small style="color:#666;">* Se aplican automáticamente al guardar</small>
+          `;
+        }
+      };
+      
+      document.getElementById('form-ctr').onsubmit = async (e) => {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        const container = containers.find(c => c.id === form.get('container_id'));
+        const tipo = container?.tipo;
         const precio = tipo === 'Container 12 pies' ? 80000 : 50000;
         const deposito = tipo === 'Container 12 pies' ? 160000 : 100000;
-        document.getElementById('resumen-ctr').innerHTML = `💰 Precio/mes: <strong>$${precio.toLocaleString()}</strong> | 🛡️ Depósito: <strong>$${deposito.toLocaleString()}</strong>`;
-      };
-
-      document.getElementById('form-ctr').onsubmit = async e => {
-        e.preventDefault();
-        const f = new FormData(e.target);
-        const tipo = containers.find(c => c.id === f.get('container_id'))?.tipo;
-        await supabase.from('contratos').insert({
-          id: f.get('id'), cliente_id: f.get('cliente_id'), container_id: f.get('container_id'),
-          inicio: f.get('inicio'), fin: f.get('fin') || null, estado: f.get('estado'),
-          precio_mes: tipo === 'Container 12 pies' ? 80000 : 50000,
-          deposito: tipo === 'Container 12 pies' ? 160000 : 100000,
-          created_by: user.id
-        });
-        await logActividad(`Contrato ${f.get('id')} creado`);
-        await initApp(); loadView('contratos');
+        
+        try {
+          await supabase.from('contratos').insert([{
+            id: form.get('id').trim(),
+            cliente_id: form.get('cliente_id'),
+            container_id: form.get('container_id'),
+            inicio: form.get('inicio'),
+            fin: form.get('fin') || null,
+            estado: form.get('estado'),
+            precio_mes: precio,
+            deposito: deposito,
+            created_by: user.id
+          }]);
+          await logActividad(`Contrato ${form.get('id')} creado`);
+          await initApp();
+          loadView('contratos');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
       };
     }
 
+    // ============ COBROS ============
     async function renderCobros() {
-      let html = `<h4>💵 Cobros Anticipados</h4><button onclick="showAddCobro()">+ Registrar Cobro</button><table><thead><tr><th>ID</th><th>Contrato</th><th>Mes</th><th>Fecha</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>`;
-      cobros.forEach(c => html += `<tr><td>${c.id}</td><td>${c.contrato_id}</td><td>${c.mes}</td><td>${c.fecha}</td><td>$${c.monto?.toLocaleString()}</td><td>${c.vencimiento || '-'}</td><td><span class="badge ${c.estado==='Cobrado'?'badge-green':'badge-orange'}">${c.estado}</span></td></tr>`);
-      document.getElementById('content').innerHTML = html + `</tbody></table>`;
+      let html = `<h4 style="margin-top:0;">💵 Cobros Anticipados</h4>
+        <button onclick="showAddCobro()" style="margin-bottom:1rem;">+ Registrar Cobro</button>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>ID</th><th>Contrato</th><th>Mes</th><th>Fecha</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+          <tbody>`;
+      
+      cobros.forEach(c => {
+        const badgeClass = c.estado === 'Cobrado' ? 'badge-green' : 'badge-orange';
+        html += `<tr>
+          <td>${c.id}</td>
+          <td>${c.contrato_id}</td>
+          <td>${c.mes}°</td>
+          <td>${c.fecha}</td>
+          <td>$${(c.monto || 0).toLocaleString()}</td>
+          <td>${c.vencimiento || '-'}</td>
+          <td><span class="badge ${badgeClass}">${c.estado}</span></td>
+        </tr>`;
+      });
+      
+      html += `</tbody></table></div>`;
+      document.getElementById('content').innerHTML = html;
     }
 
     function showAddCobro() {
-      let ctrOpts = contratos.filter(c => c.estado === 'Activo').map(c => `<option value="${c.id}">${c.id} - $${c.precio_mes?.toLocaleString()}</option>`).join('');
+      // Solo contratos activos
+      const activos = contratos.filter(c => c.estado === 'Activo');
+      let ctrOpts = activos.map(c => `<option value="${c.id}">${c.id} - $${(c.precio_mes||0).toLocaleString()}</option>`).join('');
+      
       document.getElementById('content').innerHTML = `
-        <h4>➕ Nuevo Cobro</h4>
+        <h4 style="margin-top:0;">➕ Nuevo Cobro</h4>
         <form id="form-cobro">
-          <input name="id" placeholder="ID Cobro (ej: COB-001)" required>
-          <select name="contrato_id"><option value="">Contrato</option>${ctrOpts}</select>
-          <input name="mes" type="number" placeholder="Nº de mes" required>
-          <input type="date" name="fecha" required>
-          <select name="estado"><option>Cobrado</option><option>Pendiente</option></select>
-          <button type="submit">Guardar</button>
-          <button type="button" onclick="loadView('cobros')" class="secondary">Cancelar</button>
+          <label>ID Cobro (ej: COB-001)<input name="id" placeholder="COB-001" required pattern="COB-[0-9]+" style="margin-bottom:0.8rem;"></label>
+          <label>Contrato activo<select name="contrato_id" required style="margin-bottom:0.8rem;"><option value="">Seleccionar...</option>${ctrOpts}</select></label>
+          <label>Número de mes<input name="mes" type="number" placeholder="1" min="1" required style="margin-bottom:0.8rem;"></label>
+          <label>Fecha de cobro<input type="date" name="fecha" required style="margin-bottom:0.8rem;"></label>
+          <label>Estado<select name="estado" style="margin-bottom:0.8rem;"><option>Cobrado</option><option>Pendiente</option></select></label>
+          <div class="btn-group">
+            <button type="submit">💾 Registrar</button>
+            <button type="button" onclick="loadView('cobros')" class="secondary">Cancelar</button>
+          </div>
         </form>`;
       
-      document.getElementById('form-cobro').onsubmit = async e => {
+      document.getElementById('form-cobro').onsubmit = async (e) => {
         e.preventDefault();
-        const f = new FormData(e.target);
-        const ctr = contratos.find(c => c.id === f.get('contrato_id'));
-        const fechaCobro = new Date(f.get('fecha'));
-        const venc = new Date(fechaCobro); venc.setMonth(venc.getMonth() + 1);
+        const form = new FormData(e.target);
+        const contrato = contratos.find(c => c.id === form.get('contrato_id'));
+        const fechaCobro = new Date(form.get('fecha'));
+        const vencimiento = new Date(fechaCobro);
+        vencimiento.setMonth(vencimiento.getMonth() + 1);
         
-        await supabase.from('cobros').insert({
-          id: f.get('id'), contrato_id: f.get('contrato_id'), mes: parseInt(f.get('mes')),
-          fecha: f.get('fecha'), monto: ctr?.precio_mes || 0, estado: f.get('estado'),
-          vencimiento: venc.toISOString().split('T')[0], created_by: user.id
-        });
-        await logActividad(`Cobro ${f.get('id')} registrado`);
-        await initApp(); loadView('cobros');
+        try {
+          await supabase.from('cobros').insert([{
+            id: form.get('id').trim(),
+            contrato_id: form.get('contrato_id'),
+            mes: parseInt(form.get('mes')),
+            fecha: form.get('fecha'),
+            monto: contrato?.precio_mes || 0,
+            estado: form.get('estado'),
+            vencimiento: vencimiento.toISOString().split('T')[0],
+            created_by: user.id
+          }]);
+          await logActividad(`Cobro ${form.get('id')} registrado`);
+          await initApp();
+          loadView('cobros');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
       };
     }
 
-    async function logActividad(txt) {
-      await supabase.from('activity_log').insert({ txt, created_by: user.id });
+    // ============ UTILS ============
+    async function logActividad(texto) {
+      try {
+        await supabase.from('activity_log').insert([{ txt: texto, created_by: user.id }]);
+      } catch(e) { console.log('No se pudo registrar actividad:', e); }
+    }
+
+    // ============ SERVICE WORKER PARA PWA ============
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(err => console.log('SW error:', err));
     }
   </script>
 </body>
