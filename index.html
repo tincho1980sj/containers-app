@@ -57,9 +57,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4d2lzaXdkdWd3ZXZ5ZW50cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzQyMzAsImV4cCI6MjA5NTU1MDIzMH0._aTZ6TMG3tTr5ZSvxJ9Vld8fCeLafR77TBeVJAYsqDA';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (typeof window.supabaseClient === 'undefined')
+
+
+if (typeof window.supabaseClient === 'undefined') {
+  const SUPABASE_URL = 'https://wxwisiwdugwevyentpmw.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4d2lzaXdkdWd3ZXZ5ZW50cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzQyMzAsImV4cCI6MjA5NTU1MDIzMH0._aTZ6TMG3tTr5ZSvxJ9Vld8fCeLafR77TBeVJAYsqDA';
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+const supabase = window.supabaseClient;
+
+
     
     let user = null, role = 'operario';
     let containers = [], clients = [], contratos = [], cobros = [];
